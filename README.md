@@ -10,5 +10,5 @@
 
 Install docker and [minikube](https://minikube.sigs.k8s.io/docs/start/)
 
-zStart the minikube cluster :
+Start the minikube cluster :
 `kubectl start --driver=docker`
