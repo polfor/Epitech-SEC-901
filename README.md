@@ -4,6 +4,8 @@
 
 - Create a virtual env `python -m virtualenv venv`
 
+- Activate the virtual env `. venv/bin/activate`
+
 - Install dependencies `pip install -r requirements.txt`
 
 # Launch
