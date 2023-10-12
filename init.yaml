@@ -1,0 +1,19 @@
+---
+- name: Initialize project
+  hosts: localhost
+  tasks:
+
+    - name: Check if minikube is running
+      ansible.builtin.command:
+        cmd: "minikube status"
+      register: minikube_status
+      failed_when: minikube_status.stdout_lines | length == 0
+
+    - name: Start minikube
+      ansible.builtin.command:
+        cmd: "minikube start --driver=docker --insecure-registry '10.0.0.0/24'"
+      when: minikube_running_string not in minikube_status.stdout_lines
+
+    - name: 'Enable the registry addon'
+      ansible.builtin.command:
+        cmd: "minikube addons enable registry"
