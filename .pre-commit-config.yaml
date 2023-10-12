@@ -16,4 +16,4 @@ repos:
     rev: v6.20.3
     hooks:
       - id: ansible-lint
-        files: setup\.yaml$
+        files: init\.yaml$
