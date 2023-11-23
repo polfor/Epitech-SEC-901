@@ -17,3 +17,66 @@
     - name: 'Enable the registry addon'
       ansible.builtin.command:
         cmd: "minikube addons enable registry"
+
+    - name: Set Docker daemon to use Minikube's Docker
+      ansible.builtin.shell:
+        cmd: "eval $(minikube docker-env)"
+
+    - name: 'Run socat to route port 5000 to minikube Registry'
+      ansible.builtin.shell:
+        # yamllint disable-line rule:line-length
+        cmd: 'docker run -d --rm --network=host alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip):5000"'
+
+    - name: 'Build the python-smtpd docker image'
+      ansible.builtin.command:
+        cmd: "docker build -t python-smtpd hacker/smtpd/"
+
+    - name: Load Docker images into Minikube's Docker registry
+      ansible.builtin.command:
+        cmd: "minikube image load python-smtpd"
+
+    - name: Tag Docker images
+      ansible.builtin.command:
+        cmd: "docker tag python-smtpd localhost:5000/python-smtpd"
+
+    - name: Push Docker images to Minikube's Docker registry
+      ansible.builtin.command:
+        cmd: "docker push localhost:5000/python-smtpd"
+
+    - name: Check if secret already exists
+      ansible.builtin.command:
+        cmd: "kubectl get secrets --no-headers=true"
+      register: kube_secret
+
+    - name: Generate SSL Private key
+      community.crypto.openssl_privatekey:
+        path: "hacker/haproxy/ssl/certificate.pem.key"
+        state: present
+
+    - name: Create self-signed certificate
+      community.crypto.x509_certificate:
+        path: "hacker/haproxy/ssl/certificate.pem"
+        privatekey_path: "hacker/haproxy/ssl/certificate.pem.key"
+        provider: selfsigned
+        state: present
+
+    - name: Create config map volume with certificates
+      ansible.builtin.command:
+      # yamllint disable-line rule:line-length
+        cmd: "kubectl create configmap haproxy-certs --from-file=hacker/haproxy/ssl"
+
+    - name: Apply HAProxy config volume
+      ansible.builtin.command:
+        cmd: "kubectl apply -f hacker/haproxy/haproxy-config.yml"
+
+    - name: Apply Kubernetes deployment
+      ansible.builtin.command:
+        cmd: "kubectl apply -f hacker/deployment.yml"
+
+    - name: Apply HAProxy Kube Service
+      ansible.builtin.command:
+        cmd: "kubectl apply -f hacker/haproxy/haproxy-service.yml"
+
+    - name: Apply Gophish Kube Service
+      ansible.builtin.command:
+        cmd: "kubectl apply -f hacker/gophish/gophish-service.yml"

@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-config
+data:
+  haproxy.cfg: |
+    global
+        log stdout format raw local0
+    defaults
+        mode tcp
+    frontend https-in
+        bind *:8080
+        mode tcp
+        option tcplog
+        acl path_gophish path_beg /gophish
+        use_backend gophish_backend if path_gophish
+    backend gophish_backend
+        balance roundrobin
+        server gophish-server gophish:3333 check

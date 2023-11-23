@@ -12,5 +12,5 @@
 
 Install [minikube](https://minikube.sigs.k8s.io/docs/start/)
 
-Start the minikube cluster :
-`kubectl start --driver=docker`
+Start the app :
+`ansible-playbook init.yml`
