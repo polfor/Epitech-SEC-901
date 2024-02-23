@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        # - name: python-smtpd
+        #   image: localhost:5000/python-smtpd
+        #   ports:
+        # - containerPort: 8025
+        - name: gophish
+          image: gophish/gophish:latest
+          ports:
+            - containerPort: 3333
+              hostPort: 3333
+        - name: haproxy
+          image: haproxy:latest
+          ports:
+            - containerPort: 8080
+              hostPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/local/etc/haproxy/haproxy.cfg
+              subPath: haproxy.cfg
+            - name: haproxy-certs
+              mountPath: /etc/haproxy/cert
+      volumes:
+        - name: config-volume
+          configMap:
+            name: haproxy-config
+        - name: haproxy-certs
+          configMap:
+            name: haproxy-certs
